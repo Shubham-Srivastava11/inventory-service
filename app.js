@@ -9,10 +9,6 @@ const port = 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
-  // host: CONFIG.host,
-  // user: CONFIG.user,
-  // password: CONFIG.password,
-  // database: CONFIG.database,
   host: "localhost",
   user: "root",
   password: "test",
@@ -26,7 +22,9 @@ app.post("/create-product", (req, res) => {
   const { productName, productCategory, productDesc, productRating } = req.body;
 
   if (!productName || !productDesc) {
-    return res.status(400).json({ error: "All fields are required." });
+    return res
+      .status(400)
+      .json({ status: 400, message: "All fields are required." });
   }
 
   pool.query(
@@ -35,10 +33,13 @@ app.post("/create-product", (req, res) => {
     (err, result) => {
       if (err) {
         console.error("Error during registration:", err);
-        return res.status(500).json({ error: "Failed to register user." });
+        return res
+          .status(500)
+          .json({ status: 500, message: "Failed to register user." });
       }
 
       return res.status(201).json({
+        status: 201,
         message: `Created a new product - ${productName}, successfully.`,
       });
     }
@@ -51,7 +52,9 @@ app.put("/update-product/:id", (req, res) => {
   const { id } = req.params;
 
   if (!id) {
-    return res.status(400).json({ error: "Email and password are required." });
+    return res
+      .status(400)
+      .json({ status: 400, message: "Email and password are required." });
   }
 
   pool.query(
@@ -60,14 +63,20 @@ app.put("/update-product/:id", (req, res) => {
     (err, result) => {
       if (err) {
         console.error("Error during login:", err);
-        return res.status(500).json({ error: "Failed to authenticate user." });
+        return res
+          .status(500)
+          .json({ status: 500, message: "Failed to authenticate user." });
       }
 
       if (result.length === 0) {
-        return res.status(401).json({ error: "Invalid credentials." });
+        return res
+          .status(401)
+          .json({ status: 401, message: "Invalid credentials." });
       }
 
-      return res.status(200).json({ message: "Updated product successfully." });
+      return res
+        .status(200)
+        .json({ status: 200, message: "Updated product successfully." });
     }
   );
 });
@@ -79,11 +88,13 @@ app.get("/products", (req, res) => {
       console.error("Error fetching product details:", err);
       return res
         .status(500)
-        .json({ error: "Failed to fetch product details." });
+        .json({ status: 500, message: "Failed to fetch product details." });
     }
 
     if (result.length === 0) {
-      return res.status(404).json({ error: `Products not found.` });
+      return res
+        .status(404)
+        .json({ status: 404, message: `Products not found.` });
     }
 
     return res.status(200).json(result);
@@ -91,5 +102,5 @@ app.get("/products", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`User Service listening at http://localhost:${port}`);
+  console.log(`Inventory Service listening at http://localhost:${port}`);
 });
