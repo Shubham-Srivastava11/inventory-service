@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mysql = require("mysql2");
+const amqp = require("amqplib");
 
 const app = express();
 const port = 3000;
@@ -50,7 +51,7 @@ app.post("/create-product", (req, res) => {
                     .status(500)
                     .json({ status: 500, message: "Failed to Add product." });
                 }
-
+                publishProductCreationEvent(productName);
                 return res.status(201).json({
                   status: 201,
                   message: `Created a new product - ${productName}, successfully.`,
@@ -76,7 +77,7 @@ app.post("/create-product", (req, res) => {
                 .status(500)
                 .json({ status: 500, message: "Failed to Add product." });
             }
-
+            publishProductCreationEvent(productName);
             return res.status(201).json({
               status: 201,
               message: `Created a new product - ${productName}, successfully.`,
@@ -144,3 +145,23 @@ app.get("/products", (req, res) => {
 app.listen(port, () => {
   console.log(`Inventory Service listening at http://localhost:${port}`);
 });
+
+// Publishing an event on product creation to notification service
+
+async function publishProductCreationEvent(product) {
+  const connection = await amqp.connect("amqp://localhost");
+  const channel = await connection.createChannel();
+
+  const exchangeName = "product_events";
+  const routingKey = "product.created";
+
+  await channel.assertExchange(exchangeName, "direct", { durable: true });
+  const message = product + " - A new product created successfully.";
+
+  channel.publish(exchangeName, routingKey, Buffer.from(message));
+  console.log(`Product created event sent: ${message}`);
+
+  setTimeout(() => {
+    connection.close();
+  }, 500);
+}
